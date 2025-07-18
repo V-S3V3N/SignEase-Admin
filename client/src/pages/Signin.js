@@ -62,7 +62,7 @@ const Signin = () => {
                   <div className="col-lg-12">
                     <div className="p-5">
                       <div className="text-center">
-                        <h1 className="h4 text-gray-900 mb-4">SignEase</h1>
+                        <h1 className="h4 text-gray-900 mb-4">SignEase<sup>©</sup></h1>
                         <h1 className="h4 text-gray-900 mb-4">Welcome Back!</h1>
                       </div>
                       <form className="user" onSubmit={handleSubmit}>
