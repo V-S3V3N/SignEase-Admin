@@ -16,13 +16,14 @@ const Topbar = () => {
             aria-haspopup="true"
             aria-expanded="false"
           >
-            <span className="mr-2 d-none d-lg-inline text-gray-600 small">
-              Douglas McGee
-            </span>
             <img
               className="img-profile rounded-circle"
               src="img/undraw_profile.svg"
             />
+            <div className="d-none d-lg-flex flex-column ml-2 text-gray-600 small">
+              <span>Douglas McGee</span>
+              <span className="text-gray-500">Administrator</span>
+            </div>
           </a>
           {/* <!-- Dropdown - User Information --> */}
           <div

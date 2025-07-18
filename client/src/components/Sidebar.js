@@ -2,6 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
+ function signOut() {
+  localStorage.removeItem("uid");
+  window.location.href = "/signin";
+} 
+
   return (
     <nav>
       <ul
@@ -13,10 +18,10 @@ const Sidebar = () => {
           {/* BRANDING */}
           <a
             className="sidebar-brand d-flex align-items-center justify-content-center"
-            href="index.html"
+            href="/"
           >
             <div className="sidebar-brand-icon rotate-n-15">
-              <i className="fas fa-laugh-wink"></i>
+              <i className="fas fa-hands-asl-interpreting"></i>
             </div>
             <div className="sidebar-brand-text mx-3">
               SignEase <sup>©</sup>
@@ -34,7 +39,7 @@ const Sidebar = () => {
           </li>
           <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
-            <Link to="/" className="nav-link">
+            <Link to="/subscriptionPlan" className="nav-link">
               <i className="fas fa-fw fa-crown"></i>
               <span> Subscription Plan</span>
             </Link>
@@ -63,19 +68,19 @@ const Sidebar = () => {
               <span> Profile</span>
             </Link>
           </li>
-          <hr className="sidebar-divider my-0" />
+          {/* <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
             <Link to="/" className="nav-link">
               <i className="fas fa-fw fa-plus"></i>
               <span> Create Admin</span>
             </Link>
-          </li>
+          </li> */}
           <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
-            <Link to="/login" className="nav-link">
+            <a onClick={signOut} className="nav-link" role="button">
               <i className="fas fa-fw fa-power-off"></i>
               <span> Sign Out</span>
-            </Link>
+            </a>
           </li>
         </div>
       </ul>

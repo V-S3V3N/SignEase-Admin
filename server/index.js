@@ -1,18 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+// index.js or app.js (your backend entry point)
+const express = require("express");
+const cors = require("cors");
+const authRoutes = require("./routes/authRoutes"); // <-- make sure the path is correct
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-app.get('/api/test', (req, res) => {
-  res.json({ message: "Backend working!" });
-});
+// Mount all your auth routes under /api
+app.use("/api", authRoutes); // <--- This makes /api/check-role available
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
