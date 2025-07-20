@@ -2,10 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
- function signOut() {
-  localStorage.removeItem("uid");
-  window.location.href = "/signin";
-} 
+  function signOut() {
+    localStorage.removeItem("uid");
+    window.location.href = "/signin";
+  }
 
   return (
     <nav>
@@ -61,13 +61,13 @@ const Sidebar = () => {
         </div>
 
         <div>
-          <hr className="sidebar-divider my-0" />
+          {/* <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
             <Link to="/" className="nav-link">
               <i className="fas fa-fw fa-user-circle"></i>
               <span> Profile</span>
             </Link>
-          </li>
+          </li> */}
           {/* <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
             <Link to="/" className="nav-link">

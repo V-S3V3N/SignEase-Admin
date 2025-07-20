@@ -12,7 +12,7 @@ const adminUID = "gyFOwXW0WJXDnYe0pEd0iVOFIYh2";
 
 admin
   .auth()
-  .setCustomUserClaims(adminUID, { role: "admin" })
+  .setCustomUserClaims(adminUID, { admin: true })
   .then(() => {
     console.log(`✅ Custom claim 'admin' set for UID: ${adminUID}`);
     process.exit(0);
