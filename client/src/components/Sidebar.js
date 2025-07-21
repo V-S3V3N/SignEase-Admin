@@ -8,9 +8,17 @@ const Sidebar = () => {
   }
 
   return (
-    <nav>
+    <nav className="sidebar sidebar-dark accordion"
+      id="accordionSidebar"
+      style={{
+        minHeight: "100vh",
+        position: "sticky",
+        top: 0,
+        backgroundImage: "linear-gradient(180deg,#4e73df 10%,#224abe 100%)",
+        color: "white",
+      }}>
       <ul
-        className="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion d-flex flex-column justify-content-between"
+        className="navbar-nav d-flex flex-column justify-content-between h-100"
         id="accordionSidebar"
       >
         {/* TOP PART */}

@@ -1,10 +1,12 @@
-import React from "react";
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useTable, useSortBy, usePagination } from "react-table";
+import usePlan from "../hooks/usePlan";
 
 const SubscriptionPlan = () => {
   const [planName, setPlanName] = useState("");
   const [planDuration, setPlanDuration] = useState("");
   const [planPrice, setPlanPrice] = useState("");
+  const planData = usePlan();
 
   const handleClear = () => {
     setPlanName("");
@@ -22,6 +24,40 @@ const SubscriptionPlan = () => {
     handleClear();
   };
 
+  const columns = useMemo(
+    () => [
+      { Header: "Plan Name", accessor: "name" },
+      { Header: "Price (RM)", accessor: "price" },
+      { Header: "Duration (Days)", accessor: "duration" },
+      { Header: "Total Earnings (RM)", accessor: "totalEarnings" },
+    ],
+    []
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page, // instead of rows, use page for pagination
+    canPreviousPage,
+    canNextPage,
+    nextPage,
+    previousPage,
+    state: { pageIndex },
+  } = useTable(
+    {
+      columns,
+      data: useMemo(() => planData || [], [planData]),
+      initialState: {
+        pageSize: 5,
+        sortBy: [{ id: "totalEarnings", desc: true }],
+      },
+    },
+    useSortBy,
+    usePagination
+  );
+
   return (
     <div className="container-fluid">
       {/* <!-- Page Heading --> */}
@@ -31,25 +67,25 @@ const SubscriptionPlan = () => {
 
       {/* <!-- Content Row --> */}
       <div className="row">
-        <div class="col-lg-6">
+        <div className="col-lg-6">
           {/* <!-- Collapsable Card Example --> */}
-          <div class="card shadow mb-4">
+          <div className="card shadow mb-4">
             {/* <!-- Card Header - Accordion --> */}
             <a
               href="#collapseCardExample"
-              class="d-block card-header py-3"
+              className="d-block card-header py-3"
               data-toggle="collapse"
               role="button"
               aria-expanded="true"
               aria-controls="collapseCardExample"
             >
-              <h6 class="m-0 font-weight-bold text-primary">
+              <h6 className="m-0 font-weight-bold text-primary">
                 Create New Subscription Plan
               </h6>
             </a>
             {/* <!-- Card Content - Collapse --> */}
-            <div class="collapse show" id="collapseCardExample">
-              <div class="card-body">
+            <div className="collapse show" id="collapseCardExample">
+              <div className="card-body">
                 <form className="plan-form">
                   <div className="form-group">
                     <strong>Plan Name:</strong>
@@ -106,8 +142,75 @@ const SubscriptionPlan = () => {
       </div>
 
       {/* <!-- Content Row --> */}
-
-      <div className="row"></div>
+      <div className="card shadow mb-4">
+        <div className="card-header py-3">
+          <h6 className="m-0 font-weight-bold text-primary">
+            Subscription Plans
+          </h6>
+        </div>
+        <div className="card-body">
+          <div className="table-responsive">
+            <table
+              className="table table-bordered"
+              id="dataTable"
+              width="100%"
+              cellspacing="0"
+            >
+              <thead>
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps(
+                          column.getSortByToggleProps()
+                        )}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {column.render("Header")}
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? " 🔽"
+                            : " 🔼"
+                          : ""}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {page.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()}>
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination Controls */}
+          <div className="d-flex justify-content-between mt-3">
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => previousPage()}
+              disabled={!canPreviousPage}
+            >
+              Previous
+            </button>
+            <span className="align-self-center">Page {pageIndex + 1}</span>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => nextPage()}
+              disabled={!canNextPage}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,39 +1,50 @@
-// import { collection, onSnapshot } from "firebase/firestore";
-// import { useEffect, useState } from "react";
-// import { db } from "../firebase";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from "../firebase";
 
-// // this will fetch plan revenue data and merge it with plan details --> to show which plan is generating which revenue
-// const usePlan = () => {
-//   const [planData, setPlanData] = useState([]);
+const usePlan = () => {
+  const [planData, setPlanData] = useState([]);
 
-//   useEffect(() => {
-//     const unsubscribe = onSnapshot(collection(db, "planrevenues"), async (snapshot) => {
-//       const dataWithPlanDetails = await Promise.all(
-//         snapshot.docs.map(async (docSnap) => {
-//           const revenue = docSnap.data();
-//           const planId = docSnap.id;
+  useEffect(() => {
+    // Step 1: Fetch all plans
+    const fetchData = async () => {
+      const plansSnap = await getDocs(collection(db, "plans"));
+      const allPlans = plansSnap.docs.map((doc) => ({
+        planid: doc.id,
+        ...doc.data(),
+        totalEarnings: 0, // default to 0
+      }));
 
-//           // Reference to the matching plan document
-//           const planRef = doc(db, "plans", planId);
-//           const planSnap = await getDoc(planRef);
+      // Step 2: Refer to planrevenues collection and calculate total earnings
+      const unsubscribe = onSnapshot(collection(db, "planrevenues"), (snapshot) => {
+        const revenueByPlan = {};
 
-//           return {
-//             planId,
-//             ...revenue,
-//             ...(planSnap.exists() ? planSnap.data() : {}) // merges name, desc, etc.
-//           };
-//         })
-//       );
+        snapshot.docs.forEach((docSnap) => {
+          const { planid, amount } = docSnap.data();
+          if (!planid || amount === undefined) return;
 
-//       setPlanData(dataWithPlanDetails);
-//     });
+          if (!revenueByPlan[planid]) {
+            revenueByPlan[planid] = 0;
+          }
 
-//     return () => unsubscribe();
-//   }, []);
+          revenueByPlan[planid] += Number(amount);
+        });
 
-//   return planData;
-// };
+        // Step 3: Merge revenue into allPlans
+        const merged = allPlans.map((plan) => ({
+          ...plan,
+          totalEarnings: revenueByPlan[plan.planid] || 0,
+        }));
 
-// export default usePlan;
+        setPlanData(merged);
+      });
+     return unsubscribe;
+    };
 
+    fetchData();
+  }, []);
 
+  return planData;
+};
+
+export default usePlan;
