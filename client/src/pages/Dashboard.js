@@ -159,7 +159,7 @@ const Dashboard = () => {
               <div className="row align-items-center">
                 <div className="col mr-2">
                   <div className="text-xs font-weight-bold text-success text-uppercase mb-1">
-                    Revenues (Annual)
+                    Revenues (Annually)
                   </div>
                   <div className="h5 mb-0 font-weight-bold text-gray-800">
                     {loadingRevenue ? "Loading..." : `RM ${yearlyRevenue.toFixed(2)}`}

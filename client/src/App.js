@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Signin from './pages/Signin';
 import Layout from './components/Layout';
 import SubscriptionPlan from './pages/SubscriptionPlan';
+import Course from './pages/Course';
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
@@ -22,6 +23,7 @@ function App() {
     <Route element={<Layout />}>
       <Route path="/" element={<Dashboard />} />
       <Route path="/subscriptionPlan" element={<SubscriptionPlan />} />
+      <Route path="/course" element={<Course />} />
     </Route>
   </Route>
       </Routes>

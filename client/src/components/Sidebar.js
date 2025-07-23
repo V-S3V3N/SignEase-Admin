@@ -54,7 +54,7 @@ const Sidebar = () => {
           </li>
           <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
-            <Link to="/" className="nav-link">
+            <Link to="/course" className="nav-link">
               <i className="fas fa-fw fa-book-open"></i>
               <span> Course</span>
             </Link>

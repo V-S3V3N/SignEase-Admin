@@ -1,12 +1,22 @@
 import React, { useMemo, useState } from "react";
 import { useTable, useSortBy, usePagination } from "react-table";
 import usePlan from "../hooks/usePlan";
+import usePlanActions from "../hooks/usePlanAction";
 
 const SubscriptionPlan = () => {
   const [planName, setPlanName] = useState("");
   const [planDuration, setPlanDuration] = useState("");
   const [planPrice, setPlanPrice] = useState("");
-  const planData = usePlan();
+  const [reloadKey, setReloadKey] = useState(0);
+  const planData = usePlan(reloadKey);
+  const { createPlan, deletePlan, updatePlan, loading, error } =
+    usePlanActions();
+  const [editRowId, setEditRowId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+
+  const handleReload = () => {
+    setReloadKey((prev) => prev + 1); // triggers useEffect to run again
+  };
 
   const handleClear = () => {
     setPlanName("");
@@ -14,14 +24,46 @@ const SubscriptionPlan = () => {
     setPlanPrice("");
   };
 
-  const handleCreatePlan = (e) => {
+  const handleCreatePlan = async (e) => {
     e.preventDefault();
 
-    // ✅ Send data to Firebase, backend, or wherever
-    console.log({ planName, planDuration, planPrice });
+    if (!planName || !planDuration || !planPrice) {
+      alert("Please fill in all fields.");
+      return;
+    }
 
-    // Optionally clear after submit
+    const newPlan = {
+      name: planName,
+      price: planPrice,
+      duration: planDuration,
+    };
+    await createPlan(newPlan);
+    handleReload();
     handleClear();
+  };
+
+  const handleEditClick = (row) => {
+    setEditRowId(row.original.planid); // assuming planid is unique
+    setEditFormData({ ...row.original });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: name === "enabled" ? value === "true" : value,
+    }));
+  };
+
+  const handleSaveClick = async (planId) => {
+    await updatePlan(planId, editFormData);
+    setEditRowId(null);
+    handleReload();
+  };
+
+  const handleCancelClick = () => {
+    setEditRowId(null);
+    setEditFormData({});
   };
 
   const columns = useMemo(
@@ -30,6 +72,11 @@ const SubscriptionPlan = () => {
       { Header: "Price (RM)", accessor: "price" },
       { Header: "Duration (Days)", accessor: "duration" },
       { Header: "Total Earnings (RM)", accessor: "totalEarnings" },
+      {
+        Header: "Enabled",
+        accessor: "enabled",
+        Cell: ({ value }) => (value ? "Yes" : "No"),
+      },
     ],
     []
   );
@@ -130,8 +177,9 @@ const SubscriptionPlan = () => {
                       type="button"
                       className="btn btn-primary"
                       onClick={handleCreatePlan}
+                      disabled={loading}
                     >
-                      Create Plan
+                      {loading ? "Creating..." : "Create Plan"}
                     </button>
                   </div>
                 </form>
@@ -174,17 +222,85 @@ const SubscriptionPlan = () => {
                           : ""}
                       </th>
                     ))}
+                    <th>Actions</th>
                   </tr>
                 ))}
               </thead>
               <tbody {...getTableBodyProps()}>
                 {page.map((row) => {
                   prepareRow(row);
+                  const isEditing = row.original.planid === editRowId;
+
                   return (
                     <tr {...row.getRowProps()}>
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                      ))}
+                      {row.cells.map((cell) => {
+                        const colId = cell.column.id;
+                        const isEditing = row.original.planid === editRowId;
+
+                        return (
+                          <td {...cell.getCellProps()}>
+                            {isEditing && colId !== "totalEarnings" ? (
+                              colId === "enabled" ? (
+                                <select
+                                  name="enabled"
+                                  value={
+                                    editFormData.enabled ? "true" : "false"
+                                  }
+                                  onChange={handleInputChange}
+                                  className="form-select"
+                                >
+                                  <option value="true">Enabled</option>
+                                  <option value="false">Disabled</option>
+                                </select>
+                              ) : (
+                                <input
+                                  type={
+                                    colId === "price" || colId === "duration"
+                                      ? "number"
+                                      : "text"
+                                  }
+                                  name={colId}
+                                  value={editFormData[colId]}
+                                  onChange={handleInputChange}
+                                  className="form-control"
+                                />
+                              )
+                            ) : (
+                              cell.render("Cell")
+                            )}
+                          </td>
+                        );
+                      })}
+
+                      <td>
+                        {isEditing ? (
+                          <>
+                            <button
+                              className="btn btn-success btn-sm me-1"
+                              onClick={() =>
+                                handleSaveClick(row.original.planid)
+                              }
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleCancelClick}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="btn btn-primary btn-sm me-1"
+                              onClick={() => handleEditClick(row)}
+                            >
+                              Edit
+                            </button>
+                          </>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
