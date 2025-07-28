@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useTable, useSortBy, usePagination } from "react-table";
 import useCourse from "../hooks/useCourse";
 import useCourseActions from "../hooks/useCourseAction";
+import useLesson from "../hooks/useLesson";
+import useTest from "../hooks/useTest";
 
 const Course = () => {
   const [courseName, setCourseName] = useState("");
@@ -12,17 +14,21 @@ const Course = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("asl");
   const [numberofTests, setNumberofTests] = useState("");
   const [lessonForms, setLessonForms] = useState([]);
-  const [testForms, setTestForms] = useState([]);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [questionForms, setQuestionForms] = useState([]);
+  const [testDescription, setTestDescription] = useState("");
+  const [testPassingScores, setTestPassingScores] = useState("");
   const courseData = useCourse(selectedLanguage);
   const { createCourse, updateCourse, loading, error } =
     useCourseActions(selectedLanguage);
   const [editRowId, setEditRowId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
-
-  const handleReload = () => {
-    setReloadKey((prev) => prev + 1); // triggers useEffect to run again
-  };
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [showQuestions, setShowQuestions] = useState(false);
+  const lessonsData = useLesson(selectedLanguage, selectedCourse?.courseid);
+  const testsData = useTest(selectedLanguage, selectedCourse?.courseid);
+  const [editLessonRowId, setEditLessonRowId] = useState(null);
+  const [editLessonFormData, setEditLessonFormData] = useState({});
 
   const handleClear = () => {
     setCourseName("");
@@ -30,10 +36,31 @@ const Course = () => {
     setCourseDescription("");
     setNumberofLessons("");
     setCourseLanguage("");
-    setSelectedLanguage("");
     setLessonForms([]);
-    setTestForms([]);
+    setQuestionForms([]);
     setNumberofTests("");
+    setTestDescription("");
+    setTestPassingScores("");
+  };
+
+  const isPassingScoreValid = () => {
+    const questions = parseInt(numberofTests, 10);
+    const passingScore = parseInt(testPassingScores, 10);
+    return (
+      !testPassingScores ||
+      !numberofTests ||
+      (passingScore > 0 && passingScore < questions)
+    );
+  };
+
+  const handleViewQuestions = (test) => {
+    setSelectedTest(test);
+    setShowQuestions(true);
+  };
+
+  const handleBackToTests = () => {
+    setSelectedTest(null);
+    setShowQuestions(false);
   };
 
   const handleCreateCourse = async (e) => {
@@ -51,11 +78,8 @@ const Course = () => {
         (lesson) =>
           !lesson.lessonName || !lesson.lessonDescription || !lesson.imageFile
       ) || // Ensure all lessons have names and descriptions and images
-      testForms.some(
-        (test) =>
-          !test.testDescription ||
-          !test.testPassingScore ||
-          !test.testTotalQuestion
+      questionForms.some(
+        (test) => !test.testAnswer || !test.imageFile // Ensure all tests have answers and images
       )
     ) {
       alert("Please fill in all fields.");
@@ -69,14 +93,37 @@ const Course = () => {
       numberoflessons: numberofLessons,
       enabled: true, // default to true
     };
-    await createCourse(courseLanguage, newCourse, lessonForms);
-    handleReload();
-    handleClear();
+    const newTest = {
+      description: testDescription,
+      passingscores: testPassingScores,
+      totalquestions: numberofTests,
+    };
+
+    try {
+      await createCourse(
+        courseLanguage,
+        newCourse,
+        lessonForms,
+        newTest,
+        questionForms
+      );
+
+      handleClear();
+    } catch (error) {
+      console.error("Error creating course:", error);
+      alert("Error creating course. Please try again.");
+    }
   };
 
   const handleEditClick = (row) => {
     setEditRowId(row.original.courseid);
     setEditFormData({ ...row.original });
+    setSelectedCourse(row.original);
+  };
+
+  const handleEditLessonClick = (row) => {
+    setEditLessonRowId(row.original.lessonid);
+    setEditLessonFormData({ ...row.original });
   };
 
   const handleInputChange = (e) => {
@@ -90,12 +137,15 @@ const Course = () => {
   const handleSaveClick = async (courseid) => {
     await updateCourse(courseid, editFormData);
     setEditRowId(null);
-    handleReload();
+    // handleReload();
   };
 
   const handleCancelClick = () => {
     setEditRowId(null);
     setEditFormData({});
+    setSelectedCourse(null);
+    setSelectedTest(null);
+    setShowQuestions(false);
   };
 
   useEffect(() => {
@@ -112,11 +162,11 @@ const Course = () => {
   useEffect(() => {
     const num = parseInt(numberofTests) || 0;
     const newForms = Array.from({ length: num }, (_, i) => ({
-      testDescription: "",
-      testPassingScore: "",
-      testTotalQuestion: "",
+      testAnswer: "",
+      imageFile: null,
+      imageUrl: "",
     }));
-    setTestForms(newForms);
+    setQuestionForms(newForms);
   }, [numberofTests]);
 
   const handleLessonImageChange = (e, index) => {
@@ -128,6 +178,40 @@ const Course = () => {
     setLessonForms(updated);
   };
 
+  const handleQuestionImageChange = (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const updated = [...questionForms];
+    updated[index].imageFile = e.target.files[0];
+    setQuestionForms(updated);
+  };
+
+  const ImageCell = ({ value }) =>
+    value ? (
+      <img
+        src={value}
+        alt="Images"
+        style={{ width: "100px", height: "100px", objectFit: "cover" }}
+      />
+    ) : (
+      "No Image"
+    );
+
+  const QuestionNumberCell = ({ row }) => {
+    return row.index + 1;
+  };
+
+  const EnabledCell = ({ value }) => (value ? "Yes" : "No");
+
+  const memoizedCourseData = useMemo(() => courseData || [], [courseData]);
+  const memoizedLessonsData = useMemo(() => lessonsData || [], [lessonsData]);
+  const memoizedTestsData = useMemo(() => testsData || [], [testsData]);
+  const memoizedQuestionsData = useMemo(
+    () => selectedTest?.questions || [],
+    [selectedTest]
+  );
+
   const columns = useMemo(
     () => [
       { Header: "Course Name", accessor: "name" },
@@ -137,27 +221,54 @@ const Course = () => {
       {
         Header: "Enabled",
         accessor: "enabled",
-        Cell: ({ value }) => (value ? "Yes" : "No"),
+        Cell: EnabledCell, // Using the pre-defined component
       },
     ],
     []
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page, // instead of rows, use page for pagination
-    canPreviousPage,
-    canNextPage,
-    nextPage,
-    previousPage,
-    state: { pageIndex },
-  } = useTable(
+  const lessonsColumns = useMemo(
+    () => [
+      // { Header: "Lesson Name", accessor: "lessonName" },
+      { Header: "Description", accessor: "description" },
+      { Header: "Image", accessor: "imagepath", Cell: ImageCell },
+    ],
+    []
+  );
+
+  const testsColumns = useMemo(
+    () => [
+      { Header: "Test Description", accessor: "description" },
+      { Header: "Total Questions", accessor: "totalquestions" },
+      { Header: "Passing Score", accessor: "passingscore" },
+    ],
+    []
+  );
+
+  const questionsColumns = useMemo(
+    () => [
+      {
+        Header: "Question Numbers",
+        id: "questionNumber",
+        Cell: QuestionNumberCell,
+      },
+      {
+        Header: "Answer",
+        accessor: "answer",
+      },
+      {
+        Header: "Image",
+        accessor: "questionimagepath",
+        Cell: ImageCell,
+      },
+    ],
+    []
+  );
+
+  const mainTable = useTable(
     {
       columns,
-      data: useMemo(() => courseData || [], [courseData]),
+      data: memoizedCourseData,
       initialState: {
         pageSize: 5,
         sortBy: [{ id: "name", desc: true }],
@@ -166,6 +277,67 @@ const Course = () => {
     useSortBy,
     usePagination
   );
+
+  const lessonsTable = useTable(
+    {
+      columns: lessonsColumns,
+      data: memoizedLessonsData,
+    },
+    useSortBy
+  );
+
+  const testsTable = useTable(
+    {
+      columns: testsColumns,
+      data: memoizedTestsData,
+    },
+    useSortBy
+  );
+
+  const questionsTable = useTable(
+    {
+      columns: questionsColumns,
+      data: memoizedQuestionsData,
+    },
+    useSortBy
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    nextPage,
+    previousPage,
+    state: { pageIndex },
+  } = mainTable;
+
+  const {
+    getTableProps: getLessonsTableProps,
+    getTableBodyProps: getLessonsTableBodyProps,
+    headerGroups: lessonsHeaderGroups,
+    prepareRow: prepareLessonsRow,
+    rows: lessonsRows,
+  } = lessonsTable;
+
+  const {
+    getTableProps: getTestsTableProps,
+    getTableBodyProps: getTestsTableBodyProps,
+    headerGroups: testsHeaderGroups,
+    prepareRow: prepareTestsRow,
+    rows: testsRows,
+  } = testsTable;
+
+  const {
+    getTableProps: getQuestionsTableProps,
+    getTableBodyProps: getQuestionsTableBodyProps,
+    headerGroups: questionsHeaderGroups,
+    prepareRow: prepareQuestionsRow,
+    rows: questionsRows,
+  } = questionsTable;
 
   return (
     <div className="container-fluid">
@@ -214,7 +386,7 @@ const Course = () => {
             <div className="collapse show" id="collapseCardExample">
               <div className="card-body">
                 <div className="row">
-                  <div className="col-lg-6">
+                  <div className="col-lg-4">
                     <form className="course-form">
                       <div className="form-group">
                         <strong>Language:</strong>
@@ -279,7 +451,17 @@ const Course = () => {
                         />
                       </div>
                       <div className="form-group">
-                        <strong>Number of Tests:</strong>
+                        <strong>Test Description:</strong>
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          placeholder="Enter Test Description..."
+                          value={testDescription}
+                          onChange={(e) => setTestDescription(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <strong>Number of Test Questions:</strong>
                         <input
                           type="number"
                           min="1"
@@ -290,9 +472,57 @@ const Course = () => {
                             const val = parseInt(e.target.value, 10);
                             if (val > 0 || e.target.value === "") {
                               setNumberofTests(e.target.value);
+
+                              // Reset passing score if it becomes invalid
+                              const currentPassingScore = parseInt(
+                                testPassingScores,
+                                10
+                              );
+                              if (
+                                currentPassingScore &&
+                                val &&
+                                currentPassingScore >= val
+                              ) {
+                                setTestPassingScores("");
+                              }
                             }
                           }}
                         />
+                      </div>
+                      <div className="form-group">
+                        <strong>Test Passing Scores:</strong>
+                        <input
+                          type="number"
+                          min="1"
+                          className="form-control form-control-user"
+                          placeholder="Enter Test Passing Scores..."
+                          value={testPassingScores}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            const maxQuestions = parseInt(numberofTests, 10);
+
+                            if (e.target.value === "") {
+                              setTestPassingScores("");
+                            } else if (
+                              val > 0 &&
+                              (!maxQuestions || val < maxQuestions)
+                            ) {
+                              setTestPassingScores(e.target.value);
+                            }
+                          }}
+                        />
+                        {numberofTests && (
+                          <small className="form-text text-muted">
+                            Passing score must be less than {numberofTests}{" "}
+                            questions
+                          </small>
+                        )}
+                        {testPassingScores && !isPassingScoreValid() && (
+                          <div className="invalid-feedback">
+                            Passing score must be less than the number of test
+                            questions
+                          </div>
+                        )}
                       </div>
                       <div className="d-flex justify-content-center gap-2">
                         <button
@@ -315,7 +545,7 @@ const Course = () => {
                   </div>
 
                   {/* lesson form */}
-                  <div className="col-lg-6">
+                  <div className="col-lg-4">
                     <form className="lesson-form">
                       <fieldset
                         disabled={
@@ -323,7 +553,10 @@ const Course = () => {
                           !courseName ||
                           !courseCategory ||
                           !courseDescription ||
-                          !numberofLessons
+                          !numberofLessons ||
+                          !testDescription ||
+                          !testPassingScores ||
+                          !numberofTests
                         }
                       >
                         {lessonForms.map((lesson, index) => (
@@ -333,6 +566,7 @@ const Course = () => {
                               <input
                                 type="text"
                                 className="form-control form-control-user"
+                                placeholder="Enter Lesson Name..."
                                 value={lesson.lessonName}
                                 onChange={(e) => {
                                   const updated = [...lessonForms];
@@ -346,6 +580,7 @@ const Course = () => {
                               <input
                                 type="text"
                                 className="form-control form-control-user"
+                                placeholder="Enter Lesson's Description..."
                                 value={lesson.lessonDescription}
                                 onChange={(e) => {
                                   const updated = [...lessonForms];
@@ -370,7 +605,9 @@ const Course = () => {
                         ))}
                       </fieldset>
                     </form>
+                  </div>
 
+                  <div className="col-lg-4">
                     {/* test form */}
                     <form className="test-form">
                       <fieldset
@@ -379,64 +616,37 @@ const Course = () => {
                           !courseName ||
                           !courseCategory ||
                           !courseDescription ||
+                          !numberofLessons ||
+                          !testDescription ||
+                          !testPassingScores ||
                           !numberofTests
                         }
                       >
-                        {/* testDescription: "",
-      testPassingScore: "",
-      testTotalQuestion: "", */}
-                        {testForms.map((test, index) => (
+                        {questionForms.map((test, index) => (
                           <div key={index} className="border p-3 mb-3">
                             <div className="form-group">
-                              <strong>Test Description:</strong>
+                              <strong>Question {index + 1} Answer:</strong>
                               <input
                                 type="text"
                                 className="form-control form-control-user"
-                                value={test.testDescription}
+                                placeholder="Enter Question's Answer..."
+                                value={test.testAnswer}
                                 onChange={(e) => {
-                                  const updated = [...testForms];
-                                  updated[index].testDescription =
-                                    e.target.value;
-                                  setTestForms(updated);
+                                  const updated = [...questionForms];
+                                  updated[index].testAnswer = e.target.value;
+                                  setQuestionForms(updated);
                                 }}
                               />
                             </div>
                             <div className="form-group">
-                              <strong>Test Passing Scores:</strong>
+                              <strong>Question Image:</strong>
                               <input
-                                type="number"
-                                min="1"
+                                type="file"
+                                accept="image/*"
                                 className="form-control form-control-user"
-                                placeholder="Enter Test's Passing Scores..."
-                                value={test.testPassingScore}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (val > 0 || e.target.value === "") {
-                                    const updated = [...testForms];
-                                    updated[index].testPassingScore =
-                                      e.target.value;
-                                    setTestForms(updated);
-                                  }
-                                }}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <strong>Test Total Questions:</strong>
-                              <input
-                                type="number"
-                                min="1"
-                                className="form-control form-control-user"
-                                placeholder="Enter Number of Test Questions..."
-                                value={test.testTotalQuestion}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (val > 0 || e.target.value === "") {
-                                    const updated = [...testForms];
-                                    updated[index].testTotalQuestion =
-                                      e.target.value;
-                                    setTestForms(updated);
-                                  }
-                                }}
+                                onChange={(e) =>
+                                  handleQuestionImageChange(e, index)
+                                }
                               />
                             </div>
                           </div>
@@ -587,6 +797,264 @@ const Course = () => {
           </div>
         </div>
       </div>
+
+      {/* Lessons Table - Only show when a course is selected */}
+      {selectedCourse && (
+        <div className="card shadow mb-4">
+          <div className="card-header py-3">
+            <h6 className="m-0 font-weight-bold text-success">
+              Lessons for Course "{selectedCourse.name}"
+            </h6>
+          </div>
+          <div className="card-body">
+            <div className="table-responsive">
+              <table
+                {...getLessonsTableProps()}
+                className="table table-bordered"
+                width="100%"
+                cellSpacing="0"
+              >
+                <thead>
+                  {lessonsHeaderGroups.map((headerGroup) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        <th
+                          {...column.getHeaderProps(
+                            column.getSortByToggleProps()
+                          )}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {column.render("Header")}
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? " 🔽"
+                              : " 🔼"
+                            : ""}
+                        </th>
+                      ))}
+                      <th>Actions</th>
+                    </tr>
+                  ))}
+                </thead>
+                <tbody {...getLessonsTableBodyProps()}>
+                  {lessonsRows.map((row) => {
+                    prepareLessonsRow(row);
+                    const isEditingLesson =
+                      row.original.lessonid === editLessonRowId;
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => {
+                          const colId = cell.column.id;
+                          const isEditingLesson = row.original.lessonid === editRowId;
+                          return (
+                            <td {...cell.getCellProps()}>
+                              {isEditingLesson ? (
+                                <input
+                                  type={colId === "order" ? "number" : "text"}
+                                  name={colId}
+                                  value={editLessonFormData[colId] || ""}
+                                  onChange={handleInputChange}
+                                  className="form-control"
+                                />
+                              ) : (
+                                cell.render("Cell")
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td>
+                          {isEditingLesson ? (
+                            <>
+                              <button
+                                className="btn btn-success btn-sm me-1"
+                                onClick={() =>
+                                  handleSaveClick(row.original.lessonid)
+                                }
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={handleCancelClick}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-primary btn-sm me-1"
+                                onClick={() => handleEditLessonClick(row)}
+                              >
+                                Edit
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tests Table - Show list of tests */}
+      {selectedCourse && !showQuestions && (
+        <div className="card shadow mb-4">
+          <div className="card-header py-3">
+            <h6 className="m-0 font-weight-bold text-success">
+              Tests for Course "{selectedCourse.name}"
+            </h6>
+          </div>
+          <div className="card-body">
+            <div className="table-responsive">
+              <table
+                {...getTestsTableProps()}
+                className="table table-bordered"
+                width="100%"
+                cellSpacing="0"
+              >
+                <thead>
+                  {testsHeaderGroups.map((headerGroup) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        <th
+                          {...column.getHeaderProps(
+                            column.getSortByToggleProps()
+                          )}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {column.render("Header")}
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? " 🔽"
+                              : " 🔼"
+                            : ""}
+                        </th>
+                      ))}
+                      <th>Actions</th>
+                    </tr>
+                  ))}
+                </thead>
+                <tbody {...getTestsTableBodyProps()}>
+                  {testsRows.map((row) => {
+                    prepareTestsRow(row);
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => (
+                          <td {...cell.getCellProps()}>
+                            {cell.render("Cell")}
+                          </td>
+                        ))}
+                        <td>
+                          <button
+                            className="btn btn-warning btn-sm me-1"
+                            onClick={() => handleViewQuestions(row.original)}
+                          >
+                            View Questions
+                          </button>
+                          <button className="btn btn-primary btn-sm me-1">
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Questions Table - Show when a specific test is selected */}
+      {selectedCourse && showQuestions && selectedTest && (
+        <div className="card shadow mb-4">
+          <div className="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 className="m-0 font-weight-bold text-success">
+              Questions for Test: "{selectedTest.description}"
+            </h6>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleBackToTests}
+            >
+              ← Back to Tests
+            </button>
+          </div>
+          <div className="card-body">
+            {/* Display selected test metadata */}
+            <div className="alert alert-light mb-4">
+              <div className="row">
+                <div className="col-md-4">
+                  <strong>Description:</strong> {selectedTest.description}
+                </div>
+                <div className="col-md-4">
+                  <strong>Total Questions:</strong>{" "}
+                  {selectedTest.totalquestions}
+                </div>
+                <div className="col-md-4">
+                  <strong>Passing Score:</strong> {selectedTest.passingscore}
+                </div>
+              </div>
+            </div>
+
+            {/* Questions Table */}
+            <div className="table-responsive">
+              <table
+                {...getQuestionsTableProps()}
+                className="table table-bordered"
+                width="100%"
+                cellSpacing="0"
+              >
+                <thead>
+                  {questionsHeaderGroups.map((headerGroup) => (
+                    <tr {...headerGroup.getHeaderGroupProps()}>
+                      {headerGroup.headers.map((column) => (
+                        <th
+                          {...column.getHeaderProps(
+                            column.getSortByToggleProps()
+                          )}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {column.render("Header")}
+                          {column.isSorted
+                            ? column.isSortedDesc
+                              ? " 🔽"
+                              : " 🔼"
+                            : ""}
+                        </th>
+                      ))}
+                      <th>Actions</th>
+                    </tr>
+                  ))}
+                </thead>
+                <tbody {...getQuestionsTableBodyProps()}>
+                  {questionsRows.map((row, index) => {
+                    prepareQuestionsRow(row);
+                    return (
+                      <tr {...row.getRowProps()}>
+                        {row.cells.map((cell) => (
+                          <td {...cell.getCellProps()}>
+                            {cell.render("Cell")}
+                          </td>
+                        ))}
+                        <td>
+                          <button className="btn btn-primary btn-sm me-1">
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
