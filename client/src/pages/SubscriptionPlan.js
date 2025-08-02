@@ -34,8 +34,9 @@ const SubscriptionPlan = () => {
 
     const newPlan = {
       name: planName,
-      price: planPrice,
-      duration: planDuration,
+      price: parseFloat(planPrice),
+      duration: parseInt(planDuration, 10),
+      enabled: true,
     };
     await createPlan(newPlan);
     handleReload();
@@ -148,10 +149,22 @@ const SubscriptionPlan = () => {
                     <strong>Plan Duration (Days):</strong>
                     <input
                       type="number"
+                      min="1"
+                      step="1"
                       className="form-control form-control-user"
                       placeholder="Enter Plan Duration..."
                       value={planDuration}
                       onChange={(e) => setPlanDuration(e.target.value)}
+                      onBlur={(e) => {
+                        // Validate only when user leaves the field
+                        const numValue = parseInt(e.target.value);
+                        if (isNaN(numValue) || numValue < 0) {
+                          setPlanDuration("1"); // Reset to minimum if invalid
+                        } else {
+                          // Format to 2 decimal places if valid
+                          setPlanDuration(numValue);
+                        }
+                      }}
                     />
                   </div>
                   <div className="form-group">
@@ -159,10 +172,23 @@ const SubscriptionPlan = () => {
                     <input
                       type="number"
                       step="0.01"
+                      min="20"
                       className="form-control form-control-user"
                       placeholder="Enter Plan Price..."
                       value={planPrice}
-                      onChange={(e) => setPlanPrice(e.target.value)}
+                      onChange={(e) => {
+                        setPlanPrice(e.target.value);
+                      }}
+                      onBlur={(e) => {
+                        // Validate only when user leaves the field
+                        const numValue = parseFloat(e.target.value);
+                        if (isNaN(numValue) || numValue < 20) {
+                          setPlanPrice("20.00"); // Reset to minimum if invalid
+                        } else {
+                          // Format to 2 decimal places if valid
+                          setPlanPrice(numValue.toFixed(2));
+                        }
+                      }}
                     />
                   </div>
                   <div className="d-flex justify-content-center gap-2">
