@@ -44,7 +44,7 @@ const SubscriptionPlan = () => {
   };
 
   const handleEditClick = (row) => {
-    setEditRowId(row.original.planid); // assuming planid is unique
+    setEditRowId(row.original.planid);
     setEditFormData({ ...row.original });
   };
 
@@ -225,7 +225,7 @@ const SubscriptionPlan = () => {
         <div className="card-body">
           <div className="table-responsive">
             <table
-              className="table table-bordered"
+              className="table table-bordered text-center"
               id="dataTable"
               width="100%"
               cellspacing="0"

@@ -76,10 +76,10 @@ const Course = () => {
       !numberofTests ||
       lessonForms.some(
         (lesson) =>
-          !lesson.lessonName || !lesson.lessonDescription || !lesson.imageFile
+          !lesson.lessonName || !lesson.lessonDescription || !lesson.mediaFile
       ) || // Ensure all lessons have names and descriptions and images
       questionForms.some(
-        (test) => !test.testAnswer || !test.imageFile // Ensure all tests have answers and images
+        (test) => !test.testAnswer || !test.mediaFile // Ensure all tests have answers and images
       )
     ) {
       alert("Please fill in all fields.");
@@ -119,6 +119,8 @@ const Course = () => {
     setEditRowId(row.original.courseid);
     setEditFormData({ ...row.original });
     setSelectedCourse(row.original);
+    setSelectedTest(null);
+    setShowQuestions(false);
   };
 
   const handleEditLessonClick = (row) => {
@@ -153,8 +155,9 @@ const Course = () => {
     const newForms = Array.from({ length: num }, (_, i) => ({
       lessonName: "",
       lessonDescription: "",
-      imageFile: null,
-      imageUrl: "",
+      mediaFile: null,
+      mediaUrl: "",
+      mediaType: "image",
     }));
     setLessonForms(newForms);
   }, [numberofLessons]);
@@ -163,40 +166,56 @@ const Course = () => {
     const num = parseInt(numberofTests) || 0;
     const newForms = Array.from({ length: num }, (_, i) => ({
       testAnswer: "",
-      imageFile: null,
-      imageUrl: "",
+      mediaFile: null,
+      mediaUrl: "",
+      mediaType: "image",
     }));
     setQuestionForms(newForms);
   }, [numberofTests]);
 
-  const handleLessonImageChange = (e, index) => {
+  const handleLessonMediaChange = (e, index) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const updated = [...lessonForms];
-    updated[index].imageFile = e.target.files[0];
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    updated[index].mediaFile = file;
+    updated[index].mediaType = mediaType;
     setLessonForms(updated);
   };
 
-  const handleQuestionImageChange = (e, index) => {
+  const handleQuestionMediaChange = (e, index) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const updated = [...questionForms];
-    updated[index].imageFile = e.target.files[0];
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    updated[index].mediaFile = file;
+    updated[index].mediaType = mediaType;
     setQuestionForms(updated);
   };
 
-  const ImageCell = ({ value }) =>
-    value ? (
-      <img
-        src={value}
-        alt="Images"
-        style={{ width: "100px", height: "100px", objectFit: "cover" }}
-      />
-    ) : (
-      "No Image"
-    );
+  const MediaCell = ({ value, mediaType }) => {
+    if (!value) return "No Media";
+
+    if (mediaType === "video") {
+      return (
+        <video
+          src={value}
+          controls
+          style={{ width: "300px", height: "300px", objectFit: "cover" }}
+        >
+          Your browser does not support video playback.
+        </video>
+      );
+    } else {
+      return (
+        <img
+          src={value}
+          alt="Media"
+          style={{ width: "300px", height: "300px", objectFit: "cover" }}
+        />
+      );
+    }
+  };
 
   const QuestionNumberCell = ({ row }) => {
     return row.index + 1;
@@ -231,7 +250,16 @@ const Course = () => {
     () => [
       // { Header: "Lesson Name", accessor: "lessonName" },
       { Header: "Description", accessor: "description" },
-      { Header: "Image", accessor: "imagepath", Cell: ImageCell },
+      {
+        Header: "Lessons Media",
+        accessor: "mediapath",
+        Cell: ({ row }) => (
+          <MediaCell
+            value={row.original.mediapath}
+            mediaType={row.original.mediatype || "image"}
+          />
+        ),
+      },
     ],
     []
   );
@@ -248,18 +276,28 @@ const Course = () => {
   const questionsColumns = useMemo(
     () => [
       {
-        Header: "Question Numbers",
+        Header: "Question #",
         id: "questionNumber",
         Cell: QuestionNumberCell,
+        width: 50,
+        minWidth: 50,
+        maxWidth: 100,
       },
       {
         Header: "Answer",
         accessor: "answer",
+        width: 200,
+        minWidth: 400,
       },
       {
-        Header: "Image",
-        accessor: "questionimagepath",
-        Cell: ImageCell,
+        Header: "Question Media",
+        accessor: "questionmediapath",
+        Cell: ({ row }) => (
+          <MediaCell
+            value={row.original.questionmediapath}
+            mediaType={row.original.mediatype || "image"}
+          />
+        ),
       },
     ],
     []
@@ -591,15 +629,23 @@ const Course = () => {
                               />
                             </div>
                             <div className="form-group">
-                              <strong>Lesson Image:</strong>
+                              <strong>Lesson Media (Image or Video):</strong>
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 className="form-control form-control-user"
                                 onChange={(e) =>
-                                  handleLessonImageChange(e, index)
+                                  handleLessonMediaChange(e, index)
                                 }
                               />
+                              {lesson.mediaFile && (
+                                <div className="mt-2">
+                                  <small className="text-muted">
+                                    Selected: {lesson.mediaFile.name} (
+                                    {lesson.mediaType})
+                                  </small>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -639,15 +685,23 @@ const Course = () => {
                               />
                             </div>
                             <div className="form-group">
-                              <strong>Question Image:</strong>
+                              <strong>Question Media (Image or Video):</strong>
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 className="form-control form-control-user"
                                 onChange={(e) =>
-                                  handleQuestionImageChange(e, index)
+                                  handleQuestionMediaChange(e, index)
                                 }
                               />
+                              {test.mediaFile && (
+                                <div className="mt-2">
+                                  <small className="text-muted">
+                                    Selected: {test.mediaFile.name} (
+                                    {test.mediaType})
+                                  </small>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -669,7 +723,7 @@ const Course = () => {
         <div className="card-body">
           <div className="table-responsive">
             <table
-              className="table table-bordered"
+              className="table table-bordered text-center"
               id="dataTable"
               width="100%"
               cellSpacing="0"
@@ -810,7 +864,7 @@ const Course = () => {
             <div className="table-responsive">
               <table
                 {...getLessonsTableProps()}
-                className="table table-bordered"
+                className="table table-bordered text-center"
                 width="100%"
                 cellSpacing="0"
               >
@@ -832,7 +886,7 @@ const Course = () => {
                             : ""}
                         </th>
                       ))}
-                      <th>Actions</th>
+                      {/* <th>Actions</th> */}
                     </tr>
                   ))}
                 </thead>
@@ -845,7 +899,8 @@ const Course = () => {
                       <tr {...row.getRowProps()}>
                         {row.cells.map((cell) => {
                           const colId = cell.column.id;
-                          const isEditingLesson = row.original.lessonid === editRowId;
+                          const isEditingLesson =
+                            row.original.lessonid === editRowId;
                           return (
                             <td {...cell.getCellProps()}>
                               {isEditingLesson ? (
@@ -862,7 +917,7 @@ const Course = () => {
                             </td>
                           );
                         })}
-                        <td>
+                        {/* <td>
                           {isEditingLesson ? (
                             <>
                               <button
@@ -890,7 +945,7 @@ const Course = () => {
                               </button>
                             </>
                           )}
-                        </td>
+                        </td> */}
                       </tr>
                     );
                   })}
@@ -913,7 +968,7 @@ const Course = () => {
             <div className="table-responsive">
               <table
                 {...getTestsTableProps()}
-                className="table table-bordered"
+                className="table table-bordered text-center"
                 width="100%"
                 cellSpacing="0"
               >
@@ -956,9 +1011,9 @@ const Course = () => {
                           >
                             View Questions
                           </button>
-                          <button className="btn btn-primary btn-sm me-1">
+                          {/* <button className="btn btn-primary btn-sm me-1">
                             Edit
-                          </button>
+                          </button> */}
                         </td>
                       </tr>
                     );
@@ -1005,7 +1060,7 @@ const Course = () => {
             <div className="table-responsive">
               <table
                 {...getQuestionsTableProps()}
-                className="table table-bordered"
+                className="table table-bordered text-center"
                 width="100%"
                 cellSpacing="0"
               >
@@ -1017,7 +1072,16 @@ const Course = () => {
                           {...column.getHeaderProps(
                             column.getSortByToggleProps()
                           )}
-                          style={{ cursor: "pointer" }}
+                          style={{
+                            cursor: "pointer",
+                            ...(column.width && { width: column.width }),
+                            ...(column.minWidth && {
+                              minWidth: column.minWidth,
+                            }),
+                            ...(column.maxWidth && {
+                              maxWidth: column.maxWidth,
+                            }),
+                          }}
                         >
                           {column.render("Header")}
                           {column.isSorted
@@ -1027,7 +1091,7 @@ const Course = () => {
                             : ""}
                         </th>
                       ))}
-                      <th>Actions</th>
+                      {/* <th style={{ width: 100 }}>Actions</th> */}
                     </tr>
                   ))}
                 </thead>
@@ -1037,15 +1101,28 @@ const Course = () => {
                     return (
                       <tr {...row.getRowProps()}>
                         {row.cells.map((cell) => (
-                          <td {...cell.getCellProps()}>
+                          <td
+                            {...cell.getCellProps()}
+                            style={{
+                              ...(cell.column.width && {
+                                width: cell.column.width,
+                              }),
+                              ...(cell.column.minWidth && {
+                                minWidth: cell.column.minWidth,
+                              }),
+                              ...(cell.column.maxWidth && {
+                                maxWidth: cell.column.maxWidth,
+                              }),
+                            }}
+                          >
                             {cell.render("Cell")}
                           </td>
                         ))}
-                        <td>
+                        {/* <td>
                           <button className="btn btn-primary btn-sm me-1">
                             Edit
                           </button>
-                        </td>
+                        </td> */}
                       </tr>
                     );
                   })}

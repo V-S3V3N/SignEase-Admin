@@ -17,7 +17,8 @@ const useLesson = (languageId, courseId) => {
           return {
             lessonid: doc.id,
             description: data.description,
-            imagepath: data.imagepath || "",
+            mediapath: data.mediapath || "",
+            mediatype: data.mediatype || "image",
           };
         }));
       }

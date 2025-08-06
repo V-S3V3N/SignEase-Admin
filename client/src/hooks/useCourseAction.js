@@ -55,21 +55,22 @@ const useCourseActions = (languageId) => {
 
     for (let i = 0; i < lessonForms.length; i++) {
       const lesson = lessonForms[i];
-      let imageUrl = "";
+      let mediaUrl = "";
 
-      if (lesson.imageFile) {
+      if (lesson.mediaFile) {
         const storageRef = ref(
           storage,
-          `lesson_images/${courseId}_${i}_${lesson.imageFile.name}`
+          `lesson_media/${courseId}_${i}_${lesson.mediaFile.name}`
         );
-        await uploadBytes(storageRef, lesson.imageFile);
-        imageUrl = await getDownloadURL(storageRef);
+        await uploadBytes(storageRef, lesson.mediaFile);
+        mediaUrl = await getDownloadURL(storageRef);
       }
 
       await addDoc(lessonCollection, {
         name: lesson.lessonName,
         description: lesson.lessonDescription,
-        imagepath: imageUrl,
+        mediapath: mediaUrl,
+        mediatype: lesson.mediaType,
       });
     }
   };
@@ -91,20 +92,21 @@ const useCourseActions = (languageId) => {
 
     for (let i = 0; i < questionForms.length; i++) {
       const question = questionForms[i];
-      let imageUrl = "";
+      let mediaUrl = "";
 
-      if (question.imageFile) {
+      if (question.mediaFile) {
         const storageRef = ref(
           storage,
-          `question_images/${courseId}_${i}_${question.imageFile.name}`
+          `question_media/${courseId}_${i}_${question.mediaFile.name}`
         );
-        await uploadBytes(storageRef, question.imageFile);
-        imageUrl = await getDownloadURL(storageRef);
+        await uploadBytes(storageRef, question.mediaFile);
+        mediaUrl = await getDownloadURL(storageRef);
       }
 
       questionsArray.push({
         answer: question.testAnswer,
-        questionimagepath: imageUrl,
+        questionmediapath: mediaUrl,
+        mediatype: question.mediaType,
       });
     }
 
