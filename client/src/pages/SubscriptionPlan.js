@@ -9,7 +9,7 @@ const SubscriptionPlan = () => {
   const [planPrice, setPlanPrice] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const planData = usePlan(reloadKey);
-  const { createPlan, deletePlan, updatePlan, loading, error } =
+  const { createPlan, updatePlan, loading, error } =
     usePlanActions();
   const [editRowId, setEditRowId] = useState(null);
   const [editFormData, setEditFormData] = useState({});

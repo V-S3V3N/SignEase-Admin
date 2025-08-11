@@ -6,6 +6,8 @@ import Signin from './pages/Signin';
 import Layout from './components/Layout';
 import SubscriptionPlan from './pages/SubscriptionPlan';
 import Course from './pages/Course';
+import UserManagement from './pages/UserManagement';
+import Report from './pages/Report';
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
@@ -24,6 +26,8 @@ function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/subscriptionPlan" element={<SubscriptionPlan />} />
       <Route path="/course" element={<Course />} />
+      <Route path="/userManagement" element={<UserManagement />} />
+      <Route path="/report" element={<Report />} />
     </Route>
   </Route>
       </Routes>

@@ -61,7 +61,14 @@ const Sidebar = () => {
           </li>
           <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
-            <Link to="/" className="nav-link">
+            <Link to="/userManagement" className="nav-link">
+              <i className="fas fa-fw fa-user-circle"></i>
+              <span> Users Management</span>
+            </Link>
+          </li>
+          <hr className="sidebar-divider my-0" />
+          <li className="nav-item active">
+            <Link to="/report" className="nav-link">
               <i className="fas fa-fw fa-file-alt"></i>
               <span> Report</span>
             </Link>
