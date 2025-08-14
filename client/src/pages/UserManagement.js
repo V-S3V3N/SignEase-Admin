@@ -16,7 +16,7 @@ const UserManagement = () => {
 
   const handleEditClick = (row) => {
     setEditRowId(row.original.userid);
-    setEditFormData({ ...row.original });
+    setEditFormData({ suspended: row.original.suspended });
   };
 
   const handleInputChange = (e) => {

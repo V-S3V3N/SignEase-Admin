@@ -59,13 +59,13 @@ const Sidebar = () => {
               <span> Course</span>
             </Link>
           </li>
-          <hr className="sidebar-divider my-0" />
+          {/* <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
             <Link to="/userManagement" className="nav-link">
               <i className="fas fa-fw fa-user-circle"></i>
               <span> Users Management</span>
             </Link>
-          </li>
+          </li> */}
           <hr className="sidebar-divider my-0" />
           <li className="nav-item active">
             <Link to="/report" className="nav-link">

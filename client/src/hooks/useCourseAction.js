@@ -1,5 +1,5 @@
 import { db } from "../firebase";
-import { collection, doc, updateDoc, addDoc, setDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, addDoc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState } from "react";
 
@@ -23,8 +23,14 @@ const useCourseActions = (languageId) => {
         languageid,
         "courses"
       );
-      const courseId = courseData.name;
+      const courseId = courseData.name.toLowerCase().replace(/\s+/g, "-");
       const courseDocRef = doc(courseCollection, courseId);
+
+      //check if course already exists
+      const existingCourse = await getDoc(courseDocRef);
+      if (existingCourse.exists()) {
+        return { success: false, message: "A course with this name already exists!" };
+      }
 
       const processedCourseData = {
         ...courseData,
@@ -35,8 +41,10 @@ const useCourseActions = (languageId) => {
 
       await createLessons(languageid, courseId, lessonForms);
       await createTests(languageid, courseId, testData, questionForms);
+      return { success: true };
     } catch (err) {
       setError(err.message);
+      return { success: false, message: err.message };
     } finally {
       setLoading(false);
     }

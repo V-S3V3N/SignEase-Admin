@@ -23,7 +23,7 @@ const Signin = () => {
       const token = await user.getIdToken(); // Firebase ID token
 
       // Send token to backend
-      const response = await fetch("http://localhost:5000/api/check-role", {
+      const response = await fetch("https://signease-server.onrender.com/api/check-role", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

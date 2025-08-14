@@ -56,7 +56,6 @@ const Report = () => {
     }
   };
 
-  // ✅ Dynamic columns based on current report type
   const columns = useMemo(() => {
     if (!reportType || !REPORT_CONFIGS[reportType]) {
       return [];
@@ -64,7 +63,6 @@ const Report = () => {
     return REPORT_CONFIGS[reportType].columns;
   }, [reportType]);
 
-  // ✅ Dynamic data based on report type
   const tableData = useMemo(() => {
     switch (reportType) {
       case "user":
@@ -102,7 +100,6 @@ const Report = () => {
     usePagination
   );
 
-  // ✅ Export to PDF function
   const handleExportToPDF = () => {
     if (!reportType) return;
     let detailData = [];

@@ -1,4 +1,4 @@
-// index.js or app.js (your backend entry point)
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes"); // <-- make sure the path is correct
@@ -8,8 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Mount all your auth routes under /api
-app.use("/api", authRoutes); // <--- This makes /api/check-role available
+app.use("/api", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

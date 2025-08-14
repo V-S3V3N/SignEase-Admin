@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
-export const useUserStats = () => {
-  const [nonAdminUsers, setNonAdminUsers] = useState(0);
+const useUserStats = () => {
+  const [nonAdminUsersStats, setNonAdminUsersStats] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export const useUserStats = () => {
         const allUsersSnapshot = await getDocs(usersRef);
         const allUsers = allUsersSnapshot.docs.map((doc) => doc.data());
         const nonAdmins = allUsers.filter((user) => user.role !== "admin");
-        setNonAdminUsers(nonAdmins.length);
+        setNonAdminUsersStats(nonAdmins.length);
       } catch (error) {
         console.error("Error fetching user stats:", error);
       } finally {
@@ -25,5 +25,7 @@ export const useUserStats = () => {
     fetchUserStats();
   }, []);
 
-  return { nonAdminUsers, loading };
+  return { nonAdminUsersStats, loading };
 };
+
+export default useUserStats;

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs} from "firebase/firestore";
 import { db } from "../firebase";
 
-export function useRevenueChartData() {
+function useRevenueChartData() {
   const [monthlyRevenueArray, setMonthlyRevenueArray] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,3 +29,5 @@ export function useRevenueChartData() {
 
   return { monthlyRevenueArray, loading };
 }
+
+export default useRevenueChartData;

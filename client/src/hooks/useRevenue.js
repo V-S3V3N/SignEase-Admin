@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
 
-export const useRevenue = () => {
+const useRevenue = () => {
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [yearlyRevenue, setYearlyRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -52,3 +52,5 @@ export const useRevenue = () => {
 
   return { monthlyRevenue, yearlyRevenue, loading };
 };
+
+export default useRevenue;

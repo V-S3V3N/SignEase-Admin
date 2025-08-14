@@ -29,6 +29,7 @@ const Course = () => {
   const testsData = useTest(selectedLanguage, selectedCourse?.courseid);
   const [editLessonRowId, setEditLessonRowId] = useState(null);
   const [editLessonFormData, setEditLessonFormData] = useState({});
+  const [originalData, setOriginalData] = useState(null);
 
   const handleClear = () => {
     setCourseName("");
@@ -100,7 +101,7 @@ const Course = () => {
     };
 
     try {
-      await createCourse(
+      const result = await createCourse(
         courseLanguage,
         newCourse,
         lessonForms,
@@ -108,25 +109,54 @@ const Course = () => {
         questionForms
       );
 
+      if (result.success) {
+        alert("Course created successfully!");
+      } else {
+        alert(result.message || "Failed to create course. Please try again.");
+        return;
+      }
+
       handleClear();
     } catch (error) {
       console.error("Error creating course:", error);
-      alert("Error creating course. Please try again.");
+      alert("Failed to create course. Please try again.");
     }
   };
 
   const handleEditClick = (row) => {
     setEditRowId(row.original.courseid);
     setEditFormData({ ...row.original });
+    setOriginalData(row.original);
     setSelectedCourse(row.original);
     setSelectedTest(null);
     setShowQuestions(false);
   };
 
-  const handleEditLessonClick = (row) => {
-    setEditLessonRowId(row.original.lessonid);
-    setEditLessonFormData({ ...row.original });
+  const validateForm = () => {
+    const errors = [];
+
+    if (!editFormData.name?.toString().trim()) {
+      errors.push("Course name is required");
+    }
+    if (!editFormData.category?.toString().trim()) {
+      errors.push("Course category is required");
+    }
+    if (!editFormData.description?.toString().trim()) {
+      errors.push("Course description is required");
+    }
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
+      return false;
+    }
+
+    return true;
   };
+
+  // const handleEditLessonClick = (row) => {
+  //   setEditLessonRowId(row.original.lessonid);
+  //   setEditLessonFormData({ ...row.original });
+  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -137,8 +167,20 @@ const Course = () => {
   };
 
   const handleSaveClick = async (courseid) => {
-    await updateCourse(courseid, editFormData);
-    setEditRowId(null);
+    if (!validateForm()) {
+      // revert to original data if validation fails
+      setEditFormData(originalData);
+      return;
+    }
+    try {
+      await updateCourse(courseid, editFormData);
+      setEditRowId(null);
+    } catch (error) {
+      // console.error("Error updating course:", error);
+      // Revert to original data if update fails
+      setEditFormData(originalData);
+      alert("Failed to update course. Please try again.");
+    }
     // handleReload();
   };
 

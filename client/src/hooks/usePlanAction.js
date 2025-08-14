@@ -1,5 +1,13 @@
 import { db } from "../firebase";
-import { collection, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  where,
+  query,
+  getDocs,
+  updateDoc,
+  addDoc,
+} from "firebase/firestore";
 import { useState } from "react";
 
 const usePlanActions = () => {
@@ -10,9 +18,21 @@ const usePlanActions = () => {
     setLoading(true);
     setError(null);
     try {
-      await addDoc(collection(db, "plans"), planData);
+      // check if a plan with the same name already exists
+      const plansRef = collection(db, "plans");
+      const q = query(plansRef, where("name", "==", planData.name));
+      const querySnapshot = await getDocs(q);
+
+      // if a plan with the same name exists, throw an error
+      if (!querySnapshot.empty) {
+        return { success: false, message: "A plan with this name already exists!" };
+      }
+
+      await addDoc(plansRef, planData);
+      return { success: true };
     } catch (err) {
       setError(err.message);
+      return { success: false, message: err.message };
     } finally {
       setLoading(false);
     }

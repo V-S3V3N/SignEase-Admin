@@ -9,10 +9,43 @@ const SubscriptionPlan = () => {
   const [planPrice, setPlanPrice] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const planData = usePlan(reloadKey);
-  const { createPlan, updatePlan, loading, error } =
-    usePlanActions();
+  const { createPlan, updatePlan, loading, error } = usePlanActions();
   const [editRowId, setEditRowId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [originalData, setOriginalData] = useState(null);
+
+  const validateForm = () => {
+    const errors = [];
+
+    if (!editFormData.name?.toString().trim()) {
+      errors.push("Plan name is required");
+    }
+
+    if (editFormData.price === null || editFormData.price === "") {
+      errors.push("Plan price is required");
+    } else if (
+      typeof editFormData.price !== "number" ||
+      isNaN(editFormData.price)
+    ) {
+      errors.push("Plan price must be a valid number");
+    }
+
+    if (editFormData.duration === null || editFormData.duration === "") {
+      errors.push("Plan duration is required");
+    } else if (
+      typeof editFormData.duration !== "number" ||
+      !Number.isInteger(editFormData.duration)
+    ) {
+      errors.push("Plan duration must be a whole number");
+    }
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
+      return false;
+    }
+
+    return true;
+  };
 
   const handleReload = () => {
     setReloadKey((prev) => prev + 1); // triggers useEffect to run again
@@ -38,7 +71,20 @@ const SubscriptionPlan = () => {
       duration: parseInt(planDuration, 10),
       enabled: true,
     };
-    await createPlan(newPlan);
+    try {
+      const result = await createPlan(newPlan);
+      if (result.success) {
+        alert("Plan created successfully!");
+      } else {
+        alert(result.message || "Failed to create plan. Please try again.");
+        return;
+      }
+    } catch (error) {
+      console.error("Error creating plan:", error);
+      alert("Failed to create plan. Please try again.");
+      return;
+    }
+
     handleReload();
     handleClear();
   };
@@ -46,6 +92,7 @@ const SubscriptionPlan = () => {
   const handleEditClick = (row) => {
     setEditRowId(row.original.planid);
     setEditFormData({ ...row.original });
+    setOriginalData(row.original);
   };
 
   const handleInputChange = (e) => {
@@ -57,9 +104,22 @@ const SubscriptionPlan = () => {
   };
 
   const handleSaveClick = async (planId) => {
-    await updatePlan(planId, editFormData);
-    setEditRowId(null);
-    handleReload();
+    if (!validateForm()) {
+      // revert to original data if validation fails
+      setEditFormData(originalData);
+      return;
+    }
+    try {
+      await updatePlan(planId, editFormData);
+      setEditRowId(null);
+    } catch (error) {
+      // console.error("Error updating plan:", error);
+      // Revert to original data if update fails
+      setEditFormData(originalData);
+      alert("Failed to update plan. Please try again.");
+    }
+
+    // handleReload();
   };
 
   const handleCancelClick = () => {
