@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/SignEase/static/css/main.1081b4a9.css",
+    "main.js": "/SignEase/static/js/main.eb4ae890.js",
+    "static/js/239.8842cf4e.chunk.js": "/SignEase/static/js/239.8842cf4e.chunk.js",
+    "static/js/977.2e3d5464.chunk.js": "/SignEase/static/js/977.2e3d5464.chunk.js",
+    "static/js/455.b0291735.chunk.js": "/SignEase/static/js/455.b0291735.chunk.js",
+    "index.html": "/SignEase/index.html",
+    "main.1081b4a9.css.map": "/SignEase/static/css/main.1081b4a9.css.map",
+    "main.eb4ae890.js.map": "/SignEase/static/js/main.eb4ae890.js.map",
+    "239.8842cf4e.chunk.js.map": "/SignEase/static/js/239.8842cf4e.chunk.js.map",
+    "977.2e3d5464.chunk.js.map": "/SignEase/static/js/977.2e3d5464.chunk.js.map",
+    "455.b0291735.chunk.js.map": "/SignEase/static/js/455.b0291735.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.1081b4a9.css",
+    "static/js/main.eb4ae890.js"
+  ]
+}
