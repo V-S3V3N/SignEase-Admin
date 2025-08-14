@@ -1,12 +1,18 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import Signin from './pages/Signin';
-import Layout from './components/Layout';
-import SubscriptionPlan from './pages/SubscriptionPlan';
-import Course from './pages/Course';
-import UserManagement from './pages/UserManagement';
-import Report from './pages/Report';
+import React from "react";
+import {
+  HashRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Signin from "./pages/Signin";
+import Layout from "./components/Layout";
+import SubscriptionPlan from "./pages/SubscriptionPlan";
+import Course from "./pages/Course";
+import UserManagement from "./pages/UserManagement";
+import Report from "./pages/Report";
 
 const PrivateRoute = () => {
   const uid = localStorage.getItem("uid");
@@ -15,19 +21,19 @@ const PrivateRoute = () => {
 
 function App() {
   return (
-    <Router basename={process.env.PUBLIC_URL}>
+    <Router>
       <Routes>
         <Route path="/signin" element={<Signin />} />
 
-  <Route element={<PrivateRoute />}>
-    <Route element={<Layout />}>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/subscriptionPlan" element={<SubscriptionPlan />} />
-      <Route path="/course" element={<Course />} />
-      <Route path="/userManagement" element={<UserManagement />} />
-      <Route path="/report" element={<Report />} />
-    </Route>
-  </Route>
+        <Route element={<PrivateRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/subscriptionPlan" element={<SubscriptionPlan />} />
+            <Route path="/course" element={<Course />} />
+            <Route path="/userManagement" element={<UserManagement />} />
+            <Route path="/report" element={<Report />} />
+          </Route>
+        </Route>
       </Routes>
     </Router>
   );
