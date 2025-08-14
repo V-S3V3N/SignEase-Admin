@@ -42,7 +42,7 @@ const exportReportToPDF = (
 
   // Table
   if (stats?.length) {
-    if (reportType == "revenue") {
+    if (reportType === "revenue") {
       const statHeaders = ["Metric", "", ""];
       const statRows = stats.map((s) => [s.metric, s.count, s.percentage]);
       autoTable(doc, {

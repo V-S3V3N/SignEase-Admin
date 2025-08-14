@@ -1,6 +1,5 @@
-// src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Signin from './pages/Signin';
 import Layout from './components/Layout';
@@ -8,7 +7,6 @@ import SubscriptionPlan from './pages/SubscriptionPlan';
 import Course from './pages/Course';
 import UserManagement from './pages/UserManagement';
 import Report from './pages/Report';
-import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
   const uid = localStorage.getItem("uid");
@@ -17,7 +15,7 @@ const PrivateRoute = () => {
 
 function App() {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <Routes>
         <Route path="/signin" element={<Signin />} />
 

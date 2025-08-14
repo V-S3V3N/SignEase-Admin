@@ -20,7 +20,7 @@ const Signin = () => {
         password
       );
       const user = userCredential.user;
-      const token = await user.getIdToken(); // 🔐 Firebase ID token
+      const token = await user.getIdToken(); // Firebase ID token
 
       // Send token to backend
       const response = await fetch("http://localhost:5000/api/check-role", {
@@ -35,7 +35,6 @@ const Signin = () => {
       console.log("Backend response:", result);
 
       if (response.ok) {
-        // Store role/token/etc. if needed
         localStorage.setItem("uid", user.uid);
         navigate("/");
       } else {
